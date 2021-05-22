@@ -1,0 +1,42 @@
+{
+  "name": "aws-cdk-lambda-typescript-starter",
+  "version": "1.0.0",
+  "description": "AWS CDK TypeScript skeleton starter with Lambda and DynamoDB",
+  "scripts": {
+    "build": "NODE_ENV=production node esbuild.js build",
+    "start": "ts-node-dev --inspect --files --poll -T devserver.ts",
+    "copy:lambda": "mkdir -p ./dist-server && cd ./server && npm install && rm -rf ./node_modules &&  cd .. && cp ./server/package*.json ./dist-server",
+    "build:lambda": "npm run copy:lambda && tsc -p tsconfig.build.json",
+    "cdk-deploy": "npm run build && npm run build:lambda && cdk deploy --all"
+  },
+  "author": "Anton Astashov",
+  "license": "MIT",
+  "devDependencies": {
+    "@aws-cdk/aws-apigateway": "^1.104.0",
+    "@aws-cdk/aws-certificatemanager": "^1.104.0",
+    "@aws-cdk/aws-cloudfront": "^1.104.0",
+    "@aws-cdk/aws-cloudfront-origins": "^1.104.0",
+    "@aws-cdk/aws-dynamodb": "^1.104.0",
+    "@aws-cdk/aws-lambda": "^1.104.0",
+    "@aws-cdk/aws-route53": "^1.104.0",
+    "@aws-cdk/aws-route53-targets": "^1.104.0",
+    "@aws-cdk/aws-s3": "^1.104.0",
+    "@aws-cdk/aws-s3-deployment": "^1.104.0",
+    "@aws-cdk/aws-secretsmanager": "^1.104.0",
+    "@aws-cdk/core": "^1.104.0",
+    "@types/aws-lambda": "^8.10.72",
+    "@types/node": "^15.3.0",
+    "@types/react": "^17.0.5",
+    "@types/react-dom": "^17.0.5",
+    "aws-cdk": "^1.104.0",
+    "esbuild": "^0.11.21",
+    "ts-node-dev": "^1.1.6",
+    "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "aws-sdk": "^2.907.0",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "yatro": "^0.2.2"
+  }
+}

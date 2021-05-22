@@ -1,0 +1,14 @@
+{
+  "name": "aws-typescript-app-lambda",
+  "version": "1.0.0",
+  "description": "Lambda: CDK TypeScript skeleton for lambda and dynamo",
+  "scripts": {},
+  "author": "Anton Astashov",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "yatro": "^0.2.1"
+  }
+}

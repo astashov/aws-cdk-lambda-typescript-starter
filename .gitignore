@@ -1,0 +1,8 @@
+/.vscode
+/dist
+/dist-server
+/node_modules
+/server/node_modules
+/template.yaml
+.cdk.staging
+cdk.out
