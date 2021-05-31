@@ -2,7 +2,10 @@
 
 This is a skeleton starter of a server-side rendered TypeScript React app, running on AWS Lambda and using DynamoDB as a database. It's a simple counter that stores its value in DynamoDB.
 
-Demo: https://aws-typescript-app.com
+Demo:
+
+- Production Environment: https://aws-typescript-app.com
+- Development Environment: https://dev.aws-typescript-app.com
 
 Features:
 
