@@ -25,9 +25,9 @@ interface IOptions {
 // `domainName` and `certificateArn`.
 const options: IOptions = {
   appname: "ata",
-  hostedZoneId: "Z07651032A824JHZBXG0D",
-  domainName: "aws-typescript-app.com",
-  certificateArn: "arn:aws:acm:us-east-1:547433167554:certificate/a63e8bf4-c075-4068-8be9-f1f1a3acb755",
+  // hostedZoneId: "Z09SHGRUW9283FES0D",
+  // domainName: "aws-typescript-app.com",
+  // certificateArn: "arn:aws:acm:us-east-1:1493724329:certificate/12398afes-c075-4322-8be9-f23fslksah",
 };
 // END
 
@@ -50,7 +50,7 @@ export class CdkStack extends cdk.Stack {
           command: [
             "bash",
             "-c",
-            "mkdir -p /asset-output/nodejs && cd /asset-output/nodejs && cp /asset-input/{package.json,package-lock.json} . && npm ci",
+            "mkdir -p /asset-output/nodejs && cd /asset-output/nodejs && cp /asset-input/{package.json,package-lock.json} . && npm ci --production",
           ],
           environment: {HOME: "/tmp/home"},
         },

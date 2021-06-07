@@ -5,7 +5,7 @@
   "scripts": {
     "build": "NODE_ENV=production node esbuild.js build",
     "start": "ts-node-dev --inspect --files --poll -T devserver.ts",
-    "copy:lambda": "mkdir -p ./dist-server && cd ./server && npm install && rm -rf ./node_modules &&  cd .. && cp ./server/package*.json ./dist-server",
+    "copy:lambda": "mkdir -p ./dist-server && cp ./package*.json ./dist-server",
     "build:lambda": "npm run copy:lambda && tsc -p tsconfig.build.json",
     "cdk-deploy": "npm run build && npm run build:lambda && cdk deploy --all"
   },
@@ -29,12 +29,12 @@
     "@types/react": "^17.0.5",
     "@types/react-dom": "^17.0.5",
     "aws-cdk": "^1.104.0",
+    "aws-sdk": "^2.922.0",
     "esbuild": "^0.11.21",
     "ts-node-dev": "^1.1.6",
     "typescript": "^4.2.4"
   },
   "dependencies": {
-    "aws-sdk": "^2.907.0",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
     "yatro": "^0.2.2"

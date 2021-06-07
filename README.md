@@ -7,7 +7,21 @@ Demo:
 - Production Environment: https://aws-typescript-app.com
 - Development Environment: https://dev.aws-typescript-app.com
 
-Features:
+# Why?
+
+AWS Lambdas could be a pretty good choice for a new web application, for a pet project. You don't have to manage actual servers to run your code, they're pretty cheap if you use them on demand with low load, and you can run almost any Node app there.
+
+DynamoDB makes it a good database as well, it's also pretty cheap for small loads if you use it on-demand. It's a decent document database, has secondary indexes, queries, etc. One of the coolest features that it makes backups every second, so you don't have to deal with the backups yourself.
+
+You get some simple monitoring for Lambda and Dynamo, and logs in AWS Cloudwatch. AWS has CDN (Cloudfront) and S3, where you can keep your CSS and JS bundles and distribute them closely to users.
+
+And there's a new tool called AWS CDK, which is built on top of AWS Cloudformation, that allows you to describe the infrastructure in code. So, you can write there, that for example you have 1 Lambda, some DynamoDB tables, that the Lambda has read-write access to those tables, that there's API Gateway for Lambda and there's Cloudfront distribution in front of all of this.
+
+There's some learning curve to figure out how to descibe all of that in CDK, and how to write Lambda apps. It took me a while to figure it out, and I'd definitely benefit from some skeleton project, that already has all of that set up, and which I could extend and change for my needs.
+
+This repo, AWS CDK TypeScript skeleton starter is such skeleton project.
+
+# Features
 
 - Server side rendered template, easy to add more pages
 - All the necessary AWS services and deployment is done via AWS CDK, contained in just one file [`cdk.ts`](cdk.ts).
@@ -20,24 +34,31 @@ Features:
 - Easy to add any other AWS service/feature - emails, queues, you name it.
 - 2 environments out of the box - Production and Development
 
-# How to use
+# How to start using it
 
-In AWS, you'll need a user with the following permission policies added (you can add it in AWS IAM):
+In AWS, you'll need a user with the following permission policies added (you can add them in AWS IAM):
 
 - AmazonS3FullAccess
+- AmazonDynamoDBFullAccess
 - CloudFrontFullAccess
 - AmazonAPIGatewayAdministrator
 - AmazonRoute53FullAccess
 - AWSCloudFormationFullAccess
 - AWSLambda_FullAccess
 
-Put `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_REGION` of that user into the environment variables (you may want to add those to your ~/.profile or ~/.bashrc or something).
+Put `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_REGION` of that user into the environment variables. You may want to add those to your `~/.profile` or `~/.bashrc` or something, like:
+
+```bash
+export AWS_ACCESS_KEY_ID=AKIAH6IMOHL3LIAPPJII
+export AWS_SECRET_ACCESS_KEY=pd+Kd1eYxG4U3Wjgeiqo29Ieur3921sI+fprn
+export AWS_REGION=us-west-2
+```
 
 Install [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/install-cliv2.html) and [CDK CLI](https://docs.aws.amazon.com/cdk/latest/guide/getting_started.html#getting_started_install)
 
 Clone this repo, then run `npm ci` to install dependencies.
 
-Then, search for the `CHANGEME` strings in the codebase and replace those values with your values. At the minimum, you should probably specify the app name in [`cdk.ts`](cdk.ts) (i.e. replace `ata` with something more meaningful :)).
+Then, search for the `CHANGEME` string in [`cdk.ts`](cdk.ts), and replace the app name (i.e. replace `ata` with something more meaningful :)).
 
 Then, run:
 
@@ -45,7 +66,9 @@ Then, run:
 $ npm run cdk-deploy
 ```
 
-to deploy it to AWS. It will deploy both to Dev and Prod environments, first to Dev, then to Prod. It will output the URL you can access the site, and also the table name after deploying to Dev and Prod. You can try it out by visiting that URL. Also, copy the table name that was displayed after deploying the Dev environment, and paste it in [`devserver.ts`](devserver.ts) where `CHANGEME` is for the table names.
+to deploy it to AWS. It will deploy both to Dev and Prod environments, first to Dev, then to Prod. It will output the URL you can access the site, and also the table name after deploying to Dev and Prod. You can try it out by visiting that URL.
+
+Now, copy the table name that was displayed after deploying the Dev environment, and paste it in [`devserver.ts`](devserver.ts) where `CHANGEME` is for the table names.
 
 Now, you can run it locally. Run
 
@@ -54,6 +77,19 @@ $ npm start
 ```
 
 and visit http://localhost:3000. You should be able to see the counter. If you increase counter, the new value will be stored in DynamoDB, and will be loaded from there next time you visit the page.
+
+# Directory structure
+
+```
+▾ client/
+  ▾ components/          # Shared React Components
+  ▾ pages/               # React components of pages
+▾ server/
+  ▾ pages/               # Server side parts of pages (with <head>, metatags and stuff)
+  cdk.ts                 # File describing all the infrastructure
+  devserver.ts           # Dev server
+  esbuild.js             # Script compiling JS/CSS statics
+```
 
 # How it works
 
@@ -109,6 +145,60 @@ We use server-side rendering, so the route handlers that render HTML, call the p
 The client counter-part of the page lives in `client/pages/`. There will code that rehydrates the page with the same component and data that we used on the server.
 
 Check [`server/pages/counterPage.tsx`](server/pages/counterPage.tsx) and [`client/pages/counterPage.tsx`](client/pages/counterPage.tsx) for an example.
+
+# How to add a new page
+
+1. Creat a new file in `client/components` (e.g. `aboutContent.tsx`), add a React component there, that will display the contents of your page. For example, `aboutContent.tsx` or something like that.
+2. Create a new directory in `client/pages`, e.g. `about`. There, create a new file e.g. `aboutPage.tsx`, that will look something like this:
+
+```tsx
+HydrateUtils.hydratePage<IAboutPageData>((data) => <AboutContent data={data} />);
+```
+
+This will be the entrypoint in the browser, after we rendered the HTML in browser.
+
+3. Create a new file in `server/pages/`, e.g. `aboutPage.tsx`. It will look something like this:
+
+```tsx
+export function renderAboutPage(data: IAboutPageData): string {
+  return Renderer.renderPage(<AboutPage data={data} />);
+}
+
+export function AboutPage(props: {data: IAboutPageData}): JSX.Element {
+  return (
+    <Page title="About page" css={[]} js={[`${Env.clientBaseUrl()}/aboutPageJs`]} data={props.data}>
+      <AboutContent data={props.data} />
+    </Page>
+  );
+}
+```
+
+4. Go to `server/index.ts` and add a new endpoint handler there, and then add it to the `yatro` Router.
+   In the endpoint handler, fetch the data for the page, and render it:
+
+```ts
+const aboutEndpoint = Endpoint.build("/about");
+const aboutHandler: RouteHandler<IPayload, APIGatewayProxyResult, typeof aboutEndpoint> = async () => {
+  // Fetch the data for the about page
+  return {statusCode: 200, body: renderAboutPage(data), headers: {"Content-Type": "text/html"}};
+};
+
+// below, add this endpoint and handler to the router
+const router = new Router<IPayload, APIGatewayProxyResult>(request)
+  // ...
+  .get(aboutEndpoint, aboutHandler);
+```
+
+5. Add generating the client JS bundle to `esbuild.js`, to the `bundles` array:
+
+```ts
+const bundles = {
+  aboutPageJs: "client/pages/about/aboutPage.tsx",
+};
+```
+
+That's it. It's somewhat boilerplate-y, but pretty explicit.
+Check `CounterPage` for an example.
 
 # Add a custom domain
 
