@@ -1,14 +1,14 @@
-import * as cdk from "@aws-cdk/core";
-import * as dynamodb from "@aws-cdk/aws-dynamodb";
-import * as lambda from "@aws-cdk/aws-lambda";
-import * as apigw from "@aws-cdk/aws-apigateway";
-import * as s3 from "@aws-cdk/aws-s3";
-import * as s3Deployment from "@aws-cdk/aws-s3-deployment";
-import * as cloudfront from "@aws-cdk/aws-cloudfront";
-import * as origins from "@aws-cdk/aws-cloudfront-origins";
-import * as acm from "@aws-cdk/aws-certificatemanager";
-import * as route53 from "@aws-cdk/aws-route53";
-import * as targets from "@aws-cdk/aws-route53-targets";
+import * as cdk from "aws-cdk-lib";
+import { aws_dynamodb as dynamodb } from "aws-cdk-lib";
+import { aws_lambda as lambda } from "aws-cdk-lib";
+import { aws_apigateway as apigw } from "aws-cdk-lib";
+import { aws_s3 as s3 } from "aws-cdk-lib";
+import { aws_certificatemanager as acm } from "aws-cdk-lib";
+import { aws_s3_deployment as s3Deployment } from "aws-cdk-lib";
+import { aws_cloudfront as cloudfront } from "aws-cdk-lib";
+import { aws_cloudfront_origins as origins } from "aws-cdk-lib";
+import { aws_route53 as route53 } from "aws-cdk-lib";
+import { aws_route53_targets as targets } from "aws-cdk-lib";
 import childProcess from "child_process";
 
 const commitHash = childProcess.execSync("git rev-parse --short HEAD").toString().trim();
@@ -35,7 +35,7 @@ export class CdkStack extends cdk.Stack {
   constructor(scope: cdk.App, id: string, isDev: boolean, props?: cdk.StackProps) {
     super(scope, id, props);
     const env = isDev ? "dev" : "prod";
-    const {appname, hostedZoneId, domainName, certificateArn} = options;
+    const { appname, hostedZoneId, domainName, certificateArn } = options;
 
     const domain = domainName != null ? `${isDev ? "dev." : ""}${domainName}` : undefined;
     const staticsPath = "static";
@@ -52,14 +52,14 @@ export class CdkStack extends cdk.Stack {
             "-c",
             "mkdir -p /asset-output/nodejs && cd /asset-output/nodejs && cp /asset-input/{package.json,package-lock.json} . && npm ci --production",
           ],
-          environment: {HOME: "/tmp/home"},
+          environment: { HOME: "/tmp/home" },
         },
       }),
     });
 
     // Create DynamoDB tables
     const counterTable = new dynamodb.Table(this, `${appname}-counter-${env}`, {
-      partitionKey: {name: "key", type: dynamodb.AttributeType.STRING},
+      partitionKey: { name: "key", type: dynamodb.AttributeType.STRING },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       pointInTimeRecovery: true,
     });
@@ -70,6 +70,12 @@ export class CdkStack extends cdk.Stack {
       publicReadAccess: true,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       enforceSSL: true,
+      blockPublicAccess: new s3.BlockPublicAccess({
+        blockPublicAcls: false,
+        ignorePublicAcls: false,
+        blockPublicPolicy: false,
+        restrictPublicBuckets: false,
+      }),
     });
 
     // Deploy the statics (CSS and JS bundles) to our S3 bucket
@@ -82,7 +88,7 @@ export class CdkStack extends cdk.Stack {
     // Create the lambda function, that will work as our server
     // We pass all the table names as environment variables to the lambda
     const lambdaFunction = new lambda.Function(this, `${appname}-lambda-${env}`, {
-      runtime: lambda.Runtime.NODEJS_14_X,
+      runtime: lambda.Runtime.NODEJS_20_X,
       code: lambda.Code.fromAsset("dist-server"),
       memorySize: 2048,
       layers: [depsLayer],
@@ -122,7 +128,7 @@ export class CdkStack extends cdk.Stack {
       defaultBehavior: {
         cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
         allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
-        origin: new origins.HttpOrigin(cdk.Fn.parseDomainName(restApi.url), {originPath: "/prod"}),
+        origin: new origins.HttpOrigin(cdk.Fn.parseDomainName(restApi.url), { originPath: "/prod" }),
       },
       additionalBehaviors: {
         [`/${staticsPath}/*`]: {
@@ -147,9 +153,9 @@ export class CdkStack extends cdk.Stack {
     }
 
     // Display the table names and the domain name of the cloudfront distribution
-    new cdk.CfnOutput(this, `${appname}-table-name-counter-${env}`, {value: counterTable.tableName});
+    new cdk.CfnOutput(this, `${appname}-table-name-counter-${env}`, { value: counterTable.tableName });
     new cdk.CfnOutput(this, `${appname}-domain-${env}`, {
-      value: domainName || cloudfrontDistribution.distributionDomainName,
+      value: domain || cloudfrontDistribution.distributionDomainName,
     });
   }
 }
