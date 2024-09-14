@@ -93,7 +93,7 @@ export class CdkStack extends cdk.Stack {
       memorySize: 2048,
       layers: [depsLayer],
       timeout: cdk.Duration.seconds(isDev ? 120 : 10),
-      handler: "server/index.handler",
+      handler: "index.handler",
       environment: {
         IS_DEV: `${isDev}`,
         STATICS_PATH: `/${staticsPath}`,

@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "AWS CDK TypeScript skeleton starter with Lambda and DynamoDB",
   "scripts": {
-    "build": "NODE_ENV=production node esbuild.js build",
-    "start": "ts-node-dev --inspect --files --poll -T devserver.ts",
+    "build": "NODE_ENV=production webpack",
+    "start": "concurrently \"npm run start:client\" \"npm run start:server\"",
+    "start:server": "webpack && nodemon -x 'tcm -p '**/*.module.css' client && node ./dist/devserver.js' -w client -w server -e js,ts,tsx,png,svg,css",
+    "start:client": "webpack-dev-server",
     "copy:lambda": "mkdir -p ./dist-server && cp ./package*.json ./dist-server",
-    "build:lambda": "npm run copy:lambda && tsc -p tsconfig.build.json",
+    "build:lambda": "npm run copy:lambda",
     "cdk-deploy": "npm run build && npm run build:lambda && cdk deploy --all"
   },
   "author": "Anton Astashov",
@@ -17,14 +19,27 @@
     "@types/react": "^17.0.5",
     "@types/react-dom": "^17.0.5",
     "aws-cdk-lib": "^2.114.1",
+    "concurrently": "^9.0.1",
+    "css-loader": "^6.11.0",
     "esbuild": "^0.11.21",
+    "file-loader": "^6.2.0",
+    "mini-css-extract-plugin": "^2.9.1",
+    "nodemon": "^3.1.4",
+    "postcss-loader": "^8.1.1",
+    "ts-loader": "^9.5.1",
     "ts-node-dev": "^1.1.6",
-    "typescript": "^4.2.4"
+    "typed-css-modules": "^0.9.1",
+    "typescript": "^4.2.4",
+    "webpack": "^5.94.0",
+    "webpack-bundle-analyzer": "^4.10.2",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.1.0"
   },
   "dependencies": {
-    "aws-sdk": "^2.1515.0",
+    "@aws-sdk/client-dynamodb": "^3.651.1",
+    "@aws-sdk/lib-dynamodb": "^3.651.1",
     "react": "^17.0.2",
     "react-dom": "^17.0.2",
-    "yatro": "^0.2.2"
+    "yatro": "^0.2.7"
   }
 }

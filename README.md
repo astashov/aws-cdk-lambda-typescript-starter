@@ -88,7 +88,6 @@ and visit http://localhost:3000. You should be able to see the counter. If you i
   ▾ pages/               # Server side parts of pages (with <head>, metatags and stuff)
   cdk.ts                 # File describing all the infrastructure
   devserver.ts           # Dev server
-  esbuild.js             # Script compiling JS/CSS statics
 ```
 
 # How it works
@@ -126,13 +125,13 @@ So, Cloudfront distribution will proxy `/statics/*` requests to the S3 bucket fo
 
 [`cdk.ts`](cdk.ts) defines that infrastructure in 2 environments - Prod and Dev. There will be 2 different Cloudformation stacks, and each will have each own copy of a cloudfront distrubution, s3 bucket, gateway API, lambda and dynamodb.
 
-To build CSS and JS bundles we use `esbuild`, it's maybe not as featureful as Webpack, but it's pretty simple and also blazing fast, and compiles our bundles within a second. The configuration is in `esbuild.js`.
+To build CSS and JS bundles we use Webpack.
 
 ### Local
 
-For local development, we use regular Node http server, for running the server, and we use `esbuild`'s `serve` API to run a server that serves the CSS and JS bundles. To run the local server, use `npm start` command. It will run and watch [`devserver.ts`](devserver.ts), and if any files that it imports changes, it will restart the server.
+For local development, we use regular Node http server, for running the server, and we use Webpack to run build assets both for client and server. To run the local server, use `npm start` command. It will run and watch [`devserver.ts`](devserver.ts), and if any files that it imports changes, it will restart the server.
 
-[`devserver.ts`](devserver.ts) internally will start `esbuild`'s server first, and then it will start Node's `http` server. Then, if the request path is `/statics/*`, it will proxy it to the `esbuild`'s static server. Otherwise, it will convert the `http`'s request object (`http.IncomingMessage`) into the Lambda's `APIGatewayProxyEvent`, and then will call the lambda entrypoint function with that `APIGatewayProxyEvent` as an argument. Lambda entrypoint will return `APIGatewayProxyResult` result, which `devserver.ts` will parse and convert into `http.ServerResponse` response.
+[`devserver.ts`](devserver.ts) internally will start Node's `http` server. Then, if the request path is `/statics/*`, it will proxy it to the Webpack's static server. Otherwise, it will convert the `http`'s request object (`http.IncomingMessage`) into the Lambda's `APIGatewayProxyEvent`, and then will call the lambda entrypoint function with that `APIGatewayProxyEvent` as an argument. Lambda entrypoint will return `APIGatewayProxyResult` result, which `devserver.ts` will parse and convert into `http.ServerResponse` response.
 
 So, it serves both CSS/JS bundles and the HTML itself from the same domain - this is IMHO very convenient because then you don't need to handle CORS issues.
 
@@ -189,11 +188,12 @@ const router = new Router<IPayload, APIGatewayProxyResult>(request)
   .get(aboutEndpoint, aboutHandler);
 ```
 
-5. Add generating the client JS bundle to `esbuild.js`, to the `bundles` array:
+5. Add generating the client JS bundle to `webpack.config.js`:
 
 ```ts
-const bundles = {
-  aboutPageJs: "client/pages/about/aboutPage.tsx",
+entry: {
+  aboutPage: ["./client/pages/about/aboutPage.tsx"],
+},
 };
 ```
 

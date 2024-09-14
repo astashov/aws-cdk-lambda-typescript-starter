@@ -1,8 +1,9 @@
-import {DynamoDB} from "aws-sdk";
-import {APIGatewayProxyEvent, APIGatewayProxyResult} from "aws-lambda";
-import {Endpoint, Method, Router, RouteHandler, Either} from "yatro";
-import {renderCounterPage} from "./pages/counterPage";
-import {LogUtil} from "./utils/log";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { Endpoint, Method, Router, RouteHandler, Either } from "yatro";
+import { renderCounterPage } from "./pages/counterPage";
+import { LogUtil } from "./utils/log";
 
 interface IPayload {
   event: APIGatewayProxyEvent;
@@ -10,29 +11,35 @@ interface IPayload {
 
 const counterEndpoint = Endpoint.build("/");
 const counterHandler: RouteHandler<IPayload, APIGatewayProxyResult, typeof counterEndpoint> = async () => {
-  const dynamo = new DynamoDB.DocumentClient();
-  const result = await dynamo
-    .get({
+  const client = new DynamoDBClient({});
+  const dynamo = DynamoDBDocumentClient.from(client);
+  const result = await dynamo.send(
+    new GetCommand({
       TableName: process.env.TABLE_COUNTER!,
-      Key: {key: "mycounter"},
+      Key: { key: "mycounter" },
     })
-    .promise();
+  );
 
-  return {statusCode: 200, body: renderCounterPage(result.Item?.value || 1), headers: {"Content-Type": "text/html"}};
+  return {
+    statusCode: 200,
+    body: renderCounterPage(result.Item?.value || 1),
+    headers: { "Content-Type": "text/html" },
+  };
 };
 
 const incrementEndpoint = Endpoint.build("/increment/:value|i");
 const incrementHandler: RouteHandler<IPayload, APIGatewayProxyResult, typeof incrementEndpoint> = async ({
-  match: {params},
+  match: { params },
 }) => {
-  const dynamo = new DynamoDB.DocumentClient();
-  await dynamo
-    .put({
+  const client = new DynamoDBClient({});
+  const dynamo = DynamoDBDocumentClient.from(client);
+  await dynamo.send(
+    new PutCommand({
       TableName: process.env.TABLE_COUNTER!,
-      Item: {key: "mycounter", value: params.value},
+      Item: { key: "mycounter", value: params.value },
     })
-    .promise();
-  return {statusCode: 200, body: JSON.stringify({value: params.value})};
+  );
+  return { statusCode: 200, body: JSON.stringify({ value: params.value }) };
 };
 
 export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
@@ -40,7 +47,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   const time = Date.now();
   log.log("--------> Starting request", event.httpMethod, event.path);
 
-  const request: IPayload = {event};
+  const request: IPayload = { event };
   const router = new Router<IPayload, APIGatewayProxyResult>(request)
     .get(counterEndpoint, counterHandler)
     .post(incrementEndpoint, incrementHandler);
@@ -56,7 +63,7 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
   } catch (e) {
     console.error(e);
     log.log("<-------- Responding for", event.httpMethod, event.path, 500, `${Date.now() - time}ms`);
-    return {statusCode: 500, body: "Internal Server Error"};
+    return { statusCode: 500, body: "Internal Server Error" };
   }
 
   log.log(
@@ -67,5 +74,5 @@ export const handler = async (event: APIGatewayProxyEvent): Promise<APIGatewayPr
     `${Date.now() - time}ms`
   );
 
-  return resp.success ? resp.data : {statusCode: 404, body: "Not Found"};
+  return resp.success ? resp.data : { statusCode: 404, body: "Not Found" };
 };

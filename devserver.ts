@@ -1,8 +1,7 @@
 import http from "http";
-import {handler} from "./server/index";
-import {APIGatewayProxyEvent, APIGatewayProxyEventHeaders} from "aws-lambda";
-import {URL} from "url";
-const {build} = require("./esbuild");
+import { handler } from "./server/index";
+import { APIGatewayProxyEvent, APIGatewayProxyEventHeaders } from "aws-lambda";
+import { URL } from "url";
 import childProcess from "child_process";
 
 function getBody(req: http.IncomingMessage): Promise<string> {
@@ -60,7 +59,9 @@ function proxyRequestToStatics(host: string, port: number, req: http.IncomingMes
   request.end();
 }
 
-build(true, (host: string, port: number) => {
+function main(): void {
+  const host = "localhost";
+  const port = 8080;
   console.log(`--------- Statics server is running, http://${host}:${port} ----------`);
   const server = http.createServer(async (req, res) => {
     try {
@@ -84,13 +85,16 @@ build(true, (host: string, port: number) => {
         res.setHeader(k, result.headers![k] as string);
       }
       res.end(body);
-    } catch (e) {
+    } catch (error) {
+      const e = error as Error;
       console.error(e);
       res.setHeader("Content-Type", "application/json");
-      res.end(JSON.stringify({name: e.name, error: e.message, stack: e.stack}));
+      res.end(JSON.stringify({ name: e.name, error: e.message, stack: e.stack }));
     }
   });
   server.listen(3000, "localhost", () => {
     console.log(`--------- Main server is running, http://localhost:3000 ----------`);
   });
-});
+}
+
+main();
